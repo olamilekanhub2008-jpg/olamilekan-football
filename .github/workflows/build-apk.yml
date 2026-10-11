@@ -1,3 +1,4 @@
+
 name: Build Olamilekan Football APK
 
 on:
@@ -8,11 +9,49 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Download game files
         uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android Build Tools
+        run: |
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+      - name: Install Godot Android Export Templates
+        run: |
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.4.1.stable"
+          wget -O /tmp/godot-templates.tpz \
+            https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz
+          mkdir -p /tmp/godot-templates
+          unzip -q /tmp/godot-templates.tpz -d /tmp/godot-templates
+          cp /tmp/godot-templates/templates/android_debug.apk \
+            "$HOME/.local/share/godot/export_templates/4.4.1.stable/"
+          cp /tmp/godot-templates/templates/android_release.apk \
+            "$HOME/.local/share/godot/export_templates/4.4.1.stable/"
+
+      - name: Create debug keystore
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -v \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000
 
       - name: Build Android APK
         uses: docker://barichello/godot-ci:4.4.1
@@ -24,3 +63,31 @@ jobs:
         with:
           name: Olamilekan-Football-APK
           path: OlamilekanFootball.apk
+          if-no-files-found: error
+
+## Step 2: Save your changes
+
+After replacing the code:
+
+1. Tap **Commit changes**.
+2. Enter this commit message: `Fix Android APK build`.
+3. Select the option to commit directly to `main`, if prompted.
+4. Confirm the commit.
+
+This will trigger a new GitHub Actions build.
+
+## Step 3: Check the new build
+
+1. Open your repository's **Actions** tab.
+2. Open the newest **Build Olamilekan Football APK** run.
+3. Wait for the build to finish.
+
+A green tick ✅ means the workflow succeeded. If it fails, send me the new error message.
+
+### One important thing
+
+The workflow above installs the Android requirements on the GitHub runner, but your existing Godot Docker container has its own environment. The Java, SDK, and export-template settings may not automatically be available inside that container.
+
+If the build fails again, we'll adjust the workflow so the build environment and Android export configuration work together correctly.
+
+**For now, make the change and tell me when you've tapped Commit changes.** I'll guide you through the next step.
