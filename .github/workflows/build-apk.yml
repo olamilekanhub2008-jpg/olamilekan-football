@@ -1,0 +1,26 @@
+name: Build Olamilekan Football APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download game files
+        uses: actions/checkout@v4
+
+      - name: Build Android APK
+        uses: docker://barichello/godot-ci:4.4.1
+        with:
+          args: godot --headless --path . --export-debug "Android" OlamilekanFootball.apk
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Olamilekan-Football-APK
+          path: OlamilekanFootball.apk
